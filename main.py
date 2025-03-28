@@ -1,0 +1,3 @@
+import bcrypt
+
+bcrypt.hashpw()
