@@ -7,12 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from uvicorn import run
 
 ## Local modules: ##
-from config import APP_VERION, CORSMiddleWareSettings
+from config import APP_VERSION, CORSMiddleWareSettings
 from core.api_v1.registration import registration_router
 
 
 app: FastAPI = FastAPI(
-    version=APP_VERION,
+    version=APP_VERSION,
     debug=True,
 )
 app.include_router(registration_router)
@@ -28,4 +28,4 @@ app.add_middleware(
 
 
 if __name__ == "__main__":
-    run("main:app", reload=True)
+    run("main:app", reload=False)

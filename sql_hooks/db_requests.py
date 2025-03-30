@@ -27,24 +27,24 @@ class Hook:
 
         Args:
             table (str): name of table (users/)
-            **kwargs: data (username/login/hash)
+            **kwargs: data (login/hashed_password)
         """
         current_table: str = self.table if table is None else table
         try:
             async with session_factory() as session:
                 if current_table == "users":
-                    user: Users = Users(login=kwargs["login"], hashed_pass=kwargs["hashed_pass"])
+                    user: Users = Users(login=kwargs["login"], hashed_pass=kwargs["hashed_password"])
                     session.add(user)
                     await session.commit()
                     return True
                 
                 else:
                     await session.commit()
-                    return None
+                    return False
                     
-        except Exception as error:
+        except Exception:
             await session.commit()
-            return error
+            return False
                 
     async def remove(self, table: str = None, all: bool = False, **flag):
         """Remove element in table
