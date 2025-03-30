@@ -1,3 +1,7 @@
-import bcrypt
+from sql_hooks.db_requests import delete_tables, create_tables
+import asyncio
 
-bcrypt.hashpw()
+async def a():
+    await delete_tables()
+    
+asyncio.run(a())
