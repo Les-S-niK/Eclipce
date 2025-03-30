@@ -1,14 +1,15 @@
 ## Pip modules:
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase
 
-## Project modules:
-from sql_hooks.db_engine import Base
+## Declarative Base
+class Base(DeclarativeBase):
+    pass
 
 ## Tables
 class Users(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
-    username: Mapped[str] = mapped_column(String(255))
     login: Mapped[str] = mapped_column(String(255))
-    hash: Mapped[str] = mapped_column(String(255))
+    hashed_pass: Mapped[str] = mapped_column(String(255))

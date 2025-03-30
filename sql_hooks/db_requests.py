@@ -36,7 +36,7 @@ class Hook:
         try:
             async with session_factory() as session:
                 if current_table == "users":
-                    user: Users = Users(username=kwargs["username"], login=kwargs["login"], hash=kwargs["hash"])
+                    user: Users = Users(login=kwargs["login"], hashed_pass=kwargs["hashed_pass"])
                     session.add(user)
                     await session.commit()
                     return True
@@ -63,14 +63,10 @@ class Hook:
                         query = select(Users).filter_by(**flag)
                         result = await session.execute(query)
                         users = result.scalars().first() if all is False else result.scalars().all()
-                        if users:
-                            for user in users: 
-                                await session.delete(user)
-                            await session.commit()
-                            return True
-                        else:
-                            await session.commit()
-                            return None
+                        for user in users: 
+                            await session.delete(user)
+                        await session.commit()
+                        return True
                         
                 else:
                     await session.commit()
@@ -95,18 +91,15 @@ class Hook:
                         query = select(Users).filter_by(**flag)
                         result = await session.execute(query)
                         users = result.scalars().all()
-                        if users:
-                            if not to_obj:
-                                session.commit()
-                                return [
-                                    {"id": user.id, "username": user.username, "login": user.login, "hash": user.hash} 
-                                for user in users]
-                            else: 
-                                await session.commit()
-                                return users
-                        else:
+                        if not to_obj:
+                            session.commit()
+                            return [
+                                {"id": user.id, "login": user.login, "hashed_pass": user.hashed_pass} 
+                            for user in users]
+                        else: 
                             await session.commit()
-                            return None
+                            return users
+
                         
                 else:
                     await session.commit()
