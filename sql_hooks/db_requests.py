@@ -7,21 +7,18 @@ from sql_hooks.db_models import Users, Base
 
 ## Create tables
 async def create_tables():
-    """Create all tables
-    """
+    """Create all tables"""
     async with engine.connect() as conn:
         await conn.run_sync(Base.metadata.create_all)
         
 ## Delete tables
 async def delete_tables():
-    """Delete all tables
-    """
+    """Delete all tables"""
     async with engine.connect() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-        
-## SQL hooks
+
+
 class Hook:
-    
     def __init__(self, table: str = None):
         self.table = table
 
@@ -45,9 +42,9 @@ class Hook:
                     await session.commit()
                     return None
                     
-        except Exception as e:
+        except Exception as error:
             await session.commit()
-            return e
+            return error
                 
     async def remove(self, table: str = None, all: bool = False, **flag):
         """Remove element in table
@@ -72,9 +69,9 @@ class Hook:
                     await session.commit()
                     return None
                         
-        except Exception as e:
+        except Exception as error:
             await session.commit()
-            return e
+            return error
     
     async def get(self, table: str = None, to_obj: bool = False, **flag):
         """Get element in table
@@ -105,9 +102,9 @@ class Hook:
                     await session.commit()
                     return None
                         
-        except Exception as e:
+        except Exception as error:
             await session.commit()
-            return e
+            return error
             
     async def replace(self, object, all: bool = True, table: str = None, **flag):
         """Replace info in object
@@ -135,6 +132,6 @@ class Hook:
                     await session.commit()
                     return None
                     
-        except Exception as e:
+        except Exception as error:
             await session.commit()   
-            return e 
+            return error
