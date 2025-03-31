@@ -7,134 +7,101 @@ from sql_hooks.db_models import Users, Base
 
 ## Create tables
 async def create_tables():
-    """Create all tables
-    """
+    """Create all tables"""
     async with engine.connect() as conn:
         await conn.run_sync(Base.metadata.create_all)
         
 ## Delete tables
 async def delete_tables():
-    """Delete all tables
-    """
+    """Delete all tables"""
     async with engine.connect() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-        
-## SQL hooks
-class Hook:
-    
-    def __init__(self, table: str = None):
-        self.table = table
 
-    async def append(self, table: str = None, **kwargs):
+
+class Hook:
+
+    async def append(self, **kwargs):
         """Append element in table
 
         Args:
             table (str): name of table (users/)
-            **kwargs: data (username/login/hash)
+            **kwargs: data (login/hashed_password)
         """
-        current_table: str = self.table if table is None else table
         try:
             async with session_factory() as session:
-                if current_table == "users":
-                    user: Users = Users(login=kwargs["login"], hashed_pass=kwargs["hashed_pass"])
-                    session.add(user)
-                    await session.commit()
-                    return True
-                
-                else:
-                    await session.commit()
-                    return None
+                user: Users = Users(login=kwargs["login"], hashed_pass=kwargs["hashed_password"])
+                session.add(user)
+                await session.commit()
+                return True
                     
-        except Exception as e:
+        except Exception:
             await session.commit()
-            return e
+            return False
                 
-    async def remove(self, table: str = None, all: bool = False, **flag):
+    async def remove(self, all: bool = False, **flag):
         """Remove element in table
 
         Args:
-            table (str): name of table (users/)
-            **flag: selector (id/username/login/hash)
+            **flag: selector (id/login/hashed_password)
         """
-        current_table: str = self.table if table is None else table
         try:
             async with session_factory() as session:
-                if current_table == "users":
-                        query = select(Users).filter_by(**flag)
-                        result = await session.execute(query)
-                        users = result.scalars().first() if all is False else result.scalars().all()
-                        for user in users: 
-                            await session.delete(user)
-                        await session.commit()
-                        return True
-                        
-                else:
-                    await session.commit()
-                    return None
-                        
-        except Exception as e:
+                query = select(Users).filter_by(**flag)
+                result = await session.execute(query)
+                users = result.scalars().first() if all is False else result.scalars().all()
+                for user in users: 
+                    await session.delete(user)
+                await session.commit()
+                return True
+
+        except Exception:
             await session.commit()
-            return e
+            return False
     
-    async def get(self, table: str = None, to_obj: bool = False, **flag):
+    async def get(self, to_obj: bool = False, **flag):
         """Get element in table
 
         Args:
-            table (str): name of table (users/)
             obj (bool): set true if you wanna return user object
-            **flag: selector (id/username/login/hash)
+            **flag: selector (id/login/hashed_password)
         """
-        current_table: str = self.table if table is None else table
         try:
             async with session_factory() as session:
-                if current_table == "users":
-                        query = select(Users).filter_by(**flag)
-                        result = await session.execute(query)
-                        users = result.scalars().all()
-                        if not to_obj:
-                            session.commit()
-                            return [
-                                {"id": user.id, "login": user.login, "hashed_pass": user.hashed_pass} 
-                            for user in users]
-                        else: 
-                            await session.commit()
-                            return users
-
-                        
-                else:
+                query = select(Users).filter_by(**flag)
+                result = await session.execute(query)
+                users = result.scalars().all()
+                if not to_obj:
+                    session.commit()
+                    return [
+                        {"id": user.id, "login": user.login, "hashed_pass": user.hashed_pass} 
+                    for user in users]
+                else: 
                     await session.commit()
-                    return None
-                        
-        except Exception as e:
+                    return users
+
+        except Exception as error:
             await session.commit()
-            return e
+            return error
             
-    async def replace(self, object, all: bool = True, table: str = None, **flag):
+    async def replace(self, object, all: bool = True, **flag):
         """Replace info in object
 
         Args:
-            table (str): name of table (users/)
             object (): object of element
-            **flag: selector (id/username/login/hash)
+            **flag: selector (id/login/hashed_password)
         """
-        current_table: str = self.table if table is None else table
         try:
             async with session_factory() as session:
-                if current_table == "users":
-                    for obj in object:
-                        session.add(obj)
-                        for key, value in flag.items():
-                            setattr(obj, key, value)
-                        if all is False:
-                            await session.commit()
-                            return True
-                    await session.commit()
-                    return True
-                
-                else:
-                    await session.commit()
-                    return None
+                for obj in object:
+                    session.add(obj)
+                    for key, value in flag.items():
+                        setattr(obj, key, value)
+                    if all is False:
+                        await session.commit()
+                        return True
+                await session.commit()
+                return True
                     
-        except Exception as e:
+        except Exception as error:
             await session.commit()   
-            return e 
+            return error

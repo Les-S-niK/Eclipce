@@ -1,12 +1,12 @@
 [project]
-name = "shreks"
+name = "eclipce"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "aiomysql>=0.2.0",
     "bcrypt>=4.3.0",
     "fastapi[all]>=0.115.12",
-    "pyjwt>=2.10.1",
-    "uvicorn>=0.34.0",
+    "sqlalchemy>=2.0.40",
 ]
