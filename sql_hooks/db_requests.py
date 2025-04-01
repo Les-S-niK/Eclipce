@@ -71,7 +71,7 @@ class Hook:
                 result = await session.execute(query)
                 users = result.scalars().all()
                 if not to_obj:
-                    session.commit()
+                    await session.commit()
                     return [
                         {"id": user.id, "login": user.login, "hashed_pass": user.hashed_pass} 
                     for user in users]
