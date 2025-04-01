@@ -27,7 +27,7 @@ async def user_registration(user_registration_form: UserRegistrationModel) -> JS
         user_registration_form (UserRegistrationModel): User model from front-end form.
 
     Returns:
-        JSONResponse: Json response to user. 
+        JSONResponse: Json response to user.. 
     """
     user_login: str = user_registration_form.login
     user_password: str = user_registration_form.password
