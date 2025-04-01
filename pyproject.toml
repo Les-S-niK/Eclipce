@@ -5,8 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "aiobcrypt>=3.2.0",
     "aiomysql>=0.2.0",
     "bcrypt>=4.3.0",
     "fastapi[all]>=0.115.12",
+    "pyjwt>=2.10.1",
+    "requests>=2.32.3",
     "sqlalchemy>=2.0.40",
 ]

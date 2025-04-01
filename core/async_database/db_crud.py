@@ -2,8 +2,8 @@
 from sqlalchemy import select
 
 ## Project modules:
-from sql_hooks.db_engine import session_factory, engine
-from sql_hooks.db_models import Users, Base
+from core.async_database.db_engine import session_factory, engine
+from core.async_database.db_models import Users, Base
 
 ## Create tables
 async def create_tables():
@@ -59,7 +59,7 @@ class Hook:
                 if current_table == "users":
                         query = select(Users).filter_by(**flag)
                         result = await session.execute(query)
-                        users = result.scalars().first() if all is False else result.scalars().all()
+                        users: Users = result.scalars().first() if all is False else result.scalars().all()
                         for user in users: 
                             await session.delete(user)
                         await session.commit()
@@ -73,7 +73,7 @@ class Hook:
             await session.commit()
             return error
     
-    async def get(self, table: str = None, to_obj: bool = False, **flag):
+    async def get(self, table: str = None, _one_object: bool = False, **flag):
         """Get element in table
 
         Args:
@@ -87,17 +87,11 @@ class Hook:
                 if current_table == "users":
                         query = select(Users).filter_by(**flag)
                         result = await session.execute(query)
-                        users = result.scalars().all()
-                        if not to_obj:
-                            session.commit()
-                            return [
-                                {"id": user.id, "login": user.login, "hashed_pass": user.hashed_pass} 
-                            for user in users]
-                        else: 
-                            await session.commit()
-                            return users
-
+                        users: Users = result.scalars().all()
+                        if users != []:
+                            return users[0] if _one_object else users
                         
+                        return None
                 else:
                     await session.commit()
                     return None

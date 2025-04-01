@@ -8,7 +8,9 @@ from uvicorn import run
 
 ## Local modules: ##
 from config import APP_VERSION, CORSMiddleWareSettings
-from core.api_v1.registration import registration_router
+from core.api_v1.sign_up import registration_router
+from core.api_v1.token_auth import token_auth_router
+from core.api_v1.sign_in import authorization_router
 
 
 app: FastAPI = FastAPI(
@@ -16,6 +18,8 @@ app: FastAPI = FastAPI(
     debug=True,
 )
 app.include_router(registration_router)
+app.include_router(token_auth_router)
+app.include_router(authorization_router)
 
 
 app.add_middleware(
@@ -28,4 +32,4 @@ app.add_middleware(
 
 
 if __name__ == "__main__":
-    run("main:app", reload=False)
+    run("main:app", reload=True)
