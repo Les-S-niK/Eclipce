@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const loginErrorText = "Некорректный login."
         const passwordsNotMatchErorr = "Пароли не совпадают."
         const passwordNotStrongError = "Пароль должен содержать минимум 8 символов, заглавную букву и цифру."
+        const responseError = "Произошла ошибка: "
+        const registrationUrl = "http://127.0.0.1:8000/api_v1/sign_up/"
         
         let isValid = true;
         
@@ -53,10 +55,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 login: loginInput.value,
                 password: passwordInputs[0].value
             };
-
-            localStorage.setItem('user', JSON.stringify(userData));
-
-            window.location.href = 'login.html';
+            
+            fetch(registrationUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(responseError + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => console.log(data))
+            .catch(error => console.error(responseError, error));
         } else {
             alert(errors.join('\n'));
         }
