@@ -44,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             passwordInputs.forEach(input => input.classList.remove('error'));
         }
-
         if (!isPasswordStrong(passwordInputs[0].value)) {
             errors.push(passwordNotStrongError);
             isValid = false;

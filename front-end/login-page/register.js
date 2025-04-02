@@ -1,14 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('form');
     const loginInput = document.querySelector('input[type="login"]');
-    const passwordInputs = document.querySelectorAll('input[type="password"]');
+    const passwordInput = document.querySelectorAll('input[type="password"]');
 
     function isValidlogin(login) {
         return /^[a-zA-Z0-9]+$/.test(login);
-    }
-
-    function passwordsMatch() {
-        return passwordInputs[0].value === passwordInputs[1].value;
     }
 
     function isPasswordStrong(password) {
@@ -20,8 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', (e) => {
         const errors = [];
         const loginErrorText = "Некорректный login."
-        const passwordsNotMatchErorr = "Пароли не совпадают."
         const passwordNotStrongError = "Пароль должен содержать минимум 8 символов, заглавную букву и цифру."
+        const authorizationUrl = "http://127.0.0.1:8000/api_v1/sign_in/"
         
         let isValid = true;
         
@@ -33,30 +29,40 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             loginInput.classList.remove('error');
         }
-        
-        if (!passwordsMatch()) {
-            errors.push(passwordsNotMatchErorr);
-            isValid = false;
-            passwordInputs.forEach(input => input.classList.add('error'));
-        } else {
-            passwordInputs.forEach(input => input.classList.remove('error'));
-        }
-
-        if (!isPasswordStrong(passwordInputs[0].value)) {
+        if (!isPasswordStrong(passwordInput[0].value)) {
             errors.push(passwordNotStrongError);
             isValid = false;
-            passwordInputs.forEach(input => input.classList.add('error'));
+            passwordInput.forEach(input => input.classList.add('error'));
         }
-
+        
+        console.log(passwordInput[0].value);
         if (isValid) {
             const userData = {
                 login: loginInput.value,
-                password: passwordInputs[0].value
+                password: passwordInput[0].value
             };
+            console.log(userData.password);
 
             localStorage.setItem('user', JSON.stringify(userData));
 
             window.location.href = 'login.html';
+            alert(userData);
+            fetch(authorizationUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(responseError + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => console.log(data))
+            .catch(error => console.error(responseError, error));
+
         } else {
             alert(errors.join('\n'));
         }

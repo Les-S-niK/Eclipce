@@ -8,27 +8,28 @@ from aiobcrypt import hashpw, gensalt, checkpw
 import jwt
 
 ## Local modules: ##
-from config import SECRET_KEY, TOKEN_HASH_ALGORITHM
-from core.async_database import Hook
+from config import SECRET_KEY, TOKEN_HASH_ALGORITHM, TOKEN_EXPIRE_TIME
+from core.async_database import UserHook
 from core.api_v1.sign_up.schemas import UserRegistrationModel
+from core.api_v1.token_auth.schemas import TokenDecodedModel, TokenModel
 from core.async_database.db_models import Users
+
 
 def create_access_token(
     data_to_encode: dict[str, Any],
-    expires_delta: Optional[timedelta] = timedelta(minutes=15),
+    expires_delta: Optional[timedelta] = TOKEN_EXPIRE_TIME,
 ) -> str:
     """Create access token using given information.
 
     Args:
         data_to_encode (dict[str, Any]): dictionary with user data.
-        expires_delta (Optional[timedelta], optional): Token expire time delta. Defaults to timedelta(minutes=15).
+        expires_delta (Optional[timedelta], optional): Token expire time delta. Defaults to TOKEN_EXPIRE_TIME.
 
     Returns:
         str: Generated token.
     """
     to_encode: dict[str, Any] = data_to_encode.copy()
     expire_time: datetime = datetime.now(timezone.utc) + expires_delta
-    
     to_encode.update({"exp": expire_time})
     encoded_jwt: str = jwt.encode(
         payload=to_encode,
@@ -36,6 +37,31 @@ def create_access_token(
         algorithm=TOKEN_HASH_ALGORITHM,
     )
     return encoded_jwt
+
+
+def decode_access_token(
+    encoded_token: TokenModel
+) -> TokenDecodedModel:
+    """Decode access JWT token.
+
+    Args:
+        token (str): encoded JWT token.
+
+    Returns:
+        TokenDecodedModel: Decoded token information.
+    """
+    payload: dict = jwt.decode(
+        jwt=encoded_token.access_token, 
+        key=SECRET_KEY,
+        algorithms=[TOKEN_HASH_ALGORITHM]
+    )
+    user_login: str = payload.get("sub")
+    token_expiration: datetime = payload.get("exp")
+    
+    return TokenDecodedModel(
+        login=user_login,
+        expires_delta=token_expiration,
+    )
 
 
 async def authenticate_user(user_login: str, user_password: str) -> Coroutine[Any, Any, bool | Users]:
@@ -48,7 +74,7 @@ async def authenticate_user(user_login: str, user_password: str) -> Coroutine[An
     Returns:
         bool | User: False if user not in database. User model if user input is correctly.
     """
-    async_database_hook: Hook = Hook(table="users")
+    async_database_hook: UserHook = UserHook()
     user: Users = await async_database_hook.get(
         _one_object=True,
         login=user_login,
@@ -62,7 +88,7 @@ async def authenticate_user(user_login: str, user_password: str) -> Coroutine[An
     if not password_verify_result:
         return False
     
-    return UserRegistrationModel(login=user.login, password=user.hashed_pass)
+    return UserRegistrationModel(login=user_login, password=user_password)
 
 
 class BcryptActions(object):

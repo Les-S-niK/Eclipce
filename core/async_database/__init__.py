@@ -1,11 +1,11 @@
 __all__ = [
-    "Hook",
+    "UserHook",
     "delete_tables",
     "create_tables",
 ]
 
 from core.async_database.db_crud import (
-    Hook,
+    UserHook,
     create_tables,
     delete_tables
 )

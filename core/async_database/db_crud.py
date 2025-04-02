@@ -18,8 +18,7 @@ async def delete_tables():
         await conn.run_sync(Base.metadata.drop_all)
 
 
-class Hook:
-
+class UserHook:
     async def append(self, **kwargs):
         """Append element in table
 
@@ -33,11 +32,11 @@ class Hook:
                 session.add(user)
                 await session.commit()
                 return True
-                    
+        
         except Exception:
             await session.commit()
             return False
-                
+    
     async def remove(self, all: bool = False, **flag):
         """Remove element in table
 
@@ -48,7 +47,7 @@ class Hook:
             async with session_factory() as session:
                 query = select(Users).filter_by(**flag)
                 result = await session.execute(query)
-                users = result.scalars().first() if all is False else result.scalars().all()
+                users: Users = result.scalars().first() if all is False else result.scalars().all()
                 for user in users: 
                     await session.delete(user)
                 await session.commit()
@@ -58,7 +57,7 @@ class Hook:
             await session.commit()
             return False
     
-    async def get(self, table: str = None, _one_object: bool = False, **flag):
+    async def get(self, _one_object: bool = False, **flag):
         """Get element in table
 
         Args:
@@ -69,15 +68,10 @@ class Hook:
             async with session_factory() as session:
                 query = select(Users).filter_by(**flag)
                 result = await session.execute(query)
-                users = result.scalars().all()
-                if not to_obj:
-                    await session.commit()
-                    return [
-                        {"id": user.id, "login": user.login, "hashed_pass": user.hashed_pass} 
-                    for user in users]
-                else: 
-                    await session.commit()
-                    return users
+                users: list[Users] = result.scalars().all()
+                if _one_object and users != []:
+                    return users[0]
+                return users
 
         except Exception as error:
             await session.commit()

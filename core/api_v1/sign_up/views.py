@@ -13,7 +13,7 @@ from core.api_v1.sign_up.schemas import UserRegistrationModel
 from core.api_v1.token_auth.schemas import TokenModel
 from core.api_v1.token_auth.oauth2 import BcryptActions
 from core.api_v1.token_auth.oauth2 import create_access_token
-from core.async_database import Hook
+from core.async_database import UserHook
 
 
 
@@ -38,7 +38,7 @@ async def user_registration(user_registration_form: UserRegistrationModel) -> To
     bcrypt_actions: BcryptActions = BcryptActions(password=user_password)
     hashed_user_password: bytes = await bcrypt_actions.hash_password()
     
-    async_sql_hook: Hook = Hook(table="users")
+    async_sql_hook: UserHook = UserHook()
     database_response: bool = await async_sql_hook.append(
         login=user_login,
         hashed_password=hashed_user_password

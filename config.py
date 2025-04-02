@@ -15,6 +15,13 @@ TOKEN_EXPIRE_DAYS: int = 7
 TOKEN_EXPIRE_TIME: timedelta = timedelta(days=TOKEN_EXPIRE_DAYS)
 TOKEN_TYPE: str = "Bearer"
 
+## Application endpoints. ##
+SERVER_HOST: str = "http://127.0.0.1:8000"
+TOKEN_AUTH_ENDP: str = f"{SERVER_HOST}/api_v1/token_auth"
+SIGN_IN_ENDP: str = f"{SERVER_HOST}/api_v1/sign_in"
+SIGN_UP_ENDP: str = f"{SERVER_HOST}/api_v1/sign_up"
+
+
 @dataclass
 class CORSMiddleWareSettings:
     """Setting for FastApi CORS middleware."""

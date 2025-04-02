@@ -1,21 +1,21 @@
 
 ## Local modules: ##
-from typing import Annotated, Optional
+from typing import Annotated, Optional, Any
 
 ## Third-party modules: ##
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from fastapi import status
-import jwt
+from aiohttp import ClientSession
 from jwt.exceptions import InvalidTokenError
 
 ## Local modules: ##
 from core.api_v1.sign_in.utils import get_token_dependency
 from core.api_v1.sign_up.schemas import UserRegistrationModel
 from core.api_v1.token_auth.schemas import TokenModel
-from core.api_v1.token_auth.oauth2 import authenticate_user, create_access_token
-from core.async_database import Hook
-from config import SECRET_KEY, TOKEN_HASH_ALGORITHM, TOKEN_TYPE, TOKEN_EXPIRE_TIME
+from core.api_v1.token_auth.oauth2 import authenticate_user, decode_access_token
+from core.async_database import UserHook
+from config import TOKEN_TYPE, TOKEN_AUTH_ENDP
 
 
 authorization_router: APIRouter = APIRouter(
@@ -43,24 +43,21 @@ async def user_authorization(
     )
     if auth_token:
         try:
-            payload: dict = jwt.decode(
-                jwt=auth_token.access_token, 
-                key=SECRET_KEY,
-                algorithms=[TOKEN_HASH_ALGORITHM]
-            )
-            user_login: str = payload.get("sub")
-        
+            user_login: str = decode_access_token(encoded_token=auth_token).login
         except InvalidTokenError:
             raise payload_exception
         
-        async_database_hook: Hook = Hook(table="users")
-        user: UserRegistrationModel = async_database_hook.get(
+        async_database_hook: UserHook = UserHook()
+        user: UserRegistrationModel = await async_database_hook.get(
             to_obj=True,
             login=user_login
         )
         if user:
             return auth_token
 
+    if not user_registration_form:
+        raise payload_exception
+    
     user_login: str = user_registration_form.login
     user_password: str = user_registration_form.password
     user: UserRegistrationModel = await authenticate_user(
@@ -70,12 +67,16 @@ async def user_authorization(
     if not user:
         raise payload_exception
     
-    access_token: str = create_access_token(
-        data_to_encode={"sub": user_login},
-        expires_delta=TOKEN_EXPIRE_TIME
-    )
+    json_user_data: dict[str, str] = {
+        "login": user.login,
+        "password": user.password,
+    }
+    async with ClientSession() as session:
+        async with session.post(
+            url=TOKEN_AUTH_ENDP,
+            json=json_user_data,
+        ) as response: 
+            json_response: dict[str, Any] = await response.json()
+            access_token: TokenModel = TokenModel(**json_response)
     
-    return TokenModel(
-        access_token=access_token,
-        token_type=TOKEN_TYPE
-    )
+    return access_token

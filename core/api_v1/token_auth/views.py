@@ -32,7 +32,6 @@ async def token_auth(user_registration_form: UserRegistrationModel) -> TokenMode
     """
     user_login: str = user_registration_form.login
     user_password: str = user_registration_form.password
-
     
     user_model: UserRegistrationModel = await authenticate_user(
         user_login=user_login,
