@@ -54,7 +54,6 @@ body {
     border-top-left-radius: 8%;
     border-bottom-left-radius: 8%;
     border-left: 4px solid rgb(129, 65, 5);
-    display: grid;
 }
 
 h2 {
@@ -128,6 +127,12 @@ input.error {
     border-color: #ef9415 !important;
     background: rgba(255, 71, 87, 0.1) !important;
     animation: shake 0.5s;
+}
+.error-message {
+    color: rgb(255, 128, 0); 
+    font-size: 14px;
+    margin-top: 5px;
+    font-family: Arial, sans-serif;
 }
 
 @keyframes shake {
