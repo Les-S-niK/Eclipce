@@ -76,14 +76,14 @@ async def authenticate_user(user_login: str, user_password: str) -> Coroutine[An
     """
     async_database_hook: UserHook = UserHook()
     user: Users = await async_database_hook.get(
-        _one_object=True,
+        one_object=True,
         login=user_login,
     )
     if not user:
         return False
     
     bcrypt_actions: BcryptActions = BcryptActions(password=user_password)
-    password_verify_result: bool = await bcrypt_actions.compare_password(hashed_password=user.hashed_pass)
+    password_verify_result: bool = await bcrypt_actions.compare_password(hashed_password=user.hashed_password)
     
     if not password_verify_result:
         return False

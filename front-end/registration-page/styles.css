@@ -21,7 +21,8 @@ body {
     box-shadow: 0 0 40px rgba(0,0,0,0.6);
     width: 900px;
     min-height: 500px;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(16px);
+    opacity: 0.96;
 }
 
 .image-side {
@@ -127,6 +128,12 @@ input.error {
     border-color: #ef9415 !important;
     background: rgba(255, 71, 87, 0.1) !important;
     animation: shake 0.5s;
+}
+.error-message {
+    color: rgb(255, 128, 0); 
+    font-size: 14px;
+    margin-top: 5px;
+    font-family: Arial, sans-serif;
 }
 
 @keyframes shake {

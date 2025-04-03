@@ -14,6 +14,7 @@ from core.api_v1.token_auth.schemas import TokenModel
 from core.api_v1.token_auth.oauth2 import BcryptActions
 from core.api_v1.token_auth.oauth2 import create_access_token
 from core.async_database import UserHook
+from core.async_database.db_models import Users
 
 
 
@@ -39,11 +40,17 @@ async def user_registration(user_registration_form: UserRegistrationModel) -> To
     hashed_user_password: bytes = await bcrypt_actions.hash_password()
     
     async_sql_hook: UserHook = UserHook()
-    database_response: bool = await async_sql_hook.append(
+    
+    database_response: bool | Users = await async_sql_hook.append(
         login=user_login,
         hashed_password=hashed_user_password
     )
-
+    if isinstance(database_response, Users):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User with this login already exists.",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
     if not database_response:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

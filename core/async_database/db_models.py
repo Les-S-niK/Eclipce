@@ -21,7 +21,7 @@ class Users(Base):
         nullable=False,
         unique=True
     )
-    hashed_pass: Mapped[bytes] = mapped_column(
+    hashed_password: Mapped[bytes] = mapped_column(
         VARCHAR(128),
         nullable=False
     )

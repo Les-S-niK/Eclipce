@@ -1,5 +1,6 @@
 ## Pip modules:
 from sqlalchemy import select
+from sqlalchemy.exc import OperationalError
 
 ## Project modules:
 from core.async_database.db_engine import session_factory, engine
@@ -28,13 +29,16 @@ class UserHook:
         """
         try:
             async with session_factory() as session:
-                user: Users = Users(login=kwargs["login"], hashed_pass=kwargs["hashed_password"])
+                user: Users = Users(login=kwargs["login"], hashed_password=kwargs["hashed_password"])
                 session.add(user)
                 await session.commit()
                 return True
-        
+
+        except OperationalError:
+            await session.rollback()
+            return Users(**kwargs)
         except Exception:
-            await session.commit()
+            await session.rollback()
             return False
     
     async def remove(self, all: bool = False, **flag):
@@ -54,10 +58,10 @@ class UserHook:
                 return True
 
         except Exception:
-            await session.commit()
+            await session.rollback()
             return False
     
-    async def get(self, _one_object: bool = False, **flag):
+    async def get(self, one_object: bool = False, **flag):
         """Get element in table
 
         Args:
@@ -69,13 +73,12 @@ class UserHook:
                 query = select(Users).filter_by(**flag)
                 result = await session.execute(query)
                 users: list[Users] = result.scalars().all()
-                if _one_object and users != []:
+                if one_object and users != []:
                     return users[0]
                 return users
 
-        except Exception as error:
-            await session.commit()
-            return error
+        except Exception:
+            return False
             
     async def replace(self, object, all: bool = True, **flag):
         """Replace info in object
@@ -90,12 +93,10 @@ class UserHook:
                     session.add(obj)
                     for key, value in flag.items():
                         setattr(obj, key, value)
-                    if all is False:
-                        await session.commit()
-                        return True
+                
                 await session.commit()
                 return True
                     
         except Exception as error:
-            await session.commit()   
+            await session.rollback()   
             return error
