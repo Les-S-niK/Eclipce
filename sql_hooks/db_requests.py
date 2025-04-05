@@ -19,7 +19,6 @@ async def delete_tables():
 
 
 class Hook:
-
     async def append(self, **kwargs):
         """Append element in table
 
@@ -105,3 +104,4 @@ class Hook:
         except Exception as error:
             await session.commit()   
             return error
+        
