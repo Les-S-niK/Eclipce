@@ -1,9 +1,10 @@
 ## Pip modules:
 from sqlalchemy import select
+from sqlalchemy.exc import OperationalError
 
 ## Project modules:
-from sql_hooks.db_engine import session_factory, engine
-from sql_hooks.db_models import Users, Base
+from core.async_database.db_engine import session_factory, engine
+from core.async_database.db_models import Users, Base
 
 ## Create tables
 async def create_tables():
@@ -16,27 +17,28 @@ async def delete_tables():
     """Delete all tables"""
     async with engine.connect() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-
-
-class Hook:
+class UserHook:
     async def append(self, **kwargs):
         """Append element in table
 
-        Args:
+        Args: 
             table (str): name of table (users/)
             **kwargs: data (login/hashed_password)
         """
         try:
             async with session_factory() as session:
-                user: Users = Users(login=kwargs["login"], hashed_pass=kwargs["hashed_password"])
+                user: Users = Users(login=kwargs["login"], hashed_password=kwargs["hashed_password"])
                 session.add(user)
                 await session.commit()
                 return True
-                    
+
+        except OperationalError:
+            await session.rollback()
+            return Users(**kwargs)
         except Exception:
-            await session.commit()
+            await session.rollback()
             return False
-                
+    
     async def remove(self, all: bool = False, **flag):
         """Remove element in table
 
@@ -47,17 +49,17 @@ class Hook:
             async with session_factory() as session:
                 query = select(Users).filter_by(**flag)
                 result = await session.execute(query)
-                users = result.scalars().first() if all is False else result.scalars().all()
+                users: Users = result.scalars().first() if all is False else result.scalars().all()
                 for user in users: 
                     await session.delete(user)
                 await session.commit()
                 return True
 
         except Exception:
-            await session.commit()
+            await session.rollback()
             return False
     
-    async def get(self, to_obj: bool = False, **flag):
+    async def get(self, one_object: bool = False, **flag):
         """Get element in table
 
         Args:
@@ -68,19 +70,13 @@ class Hook:
             async with session_factory() as session:
                 query = select(Users).filter_by(**flag)
                 result = await session.execute(query)
-                users = result.scalars().all()
-                if not to_obj:
-                    await session.commit()
-                    return [
-                        {"id": user.id, "login": user.login, "hashed_pass": user.hashed_pass} 
-                    for user in users]
-                else: 
-                    await session.commit()
-                    return users
+                users: list[Users] = result.scalars().all()
+                if one_object and users != []:
+                    return users[0]
+                return users
 
-        except Exception as error:
-            await session.commit()
-            return error
+        except Exception:
+            return False
             
     async def replace(self, object, all: bool = True, **flag):
         """Replace info in object
@@ -95,13 +91,10 @@ class Hook:
                     session.add(obj)
                     for key, value in flag.items():
                         setattr(obj, key, value)
-                    if all is False:
-                        await session.commit()
-                        return True
+                
                 await session.commit()
                 return True
                     
         except Exception as error:
-            await session.commit()   
+            await session.rollback()   
             return error
-        

@@ -18,7 +18,7 @@ class Settings:
 
 engine = create_async_engine(
     url=Settings().DATABASE_URL_PYMYSQL,
-    echo=True,
+    echo=False,
     pool_size=5,
     max_overflow=10
 )
