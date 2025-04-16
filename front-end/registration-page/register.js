@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function isValidlogin(login) {
         return /^[a-zA-Z0-9]+$/.test(login) &&
             login.length >= 4 &&
-            login.length <= 24;
+            login.length <= 16;
     }
 
     function passwordsMatch() {

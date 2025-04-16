@@ -14,7 +14,7 @@ class UserRegistrationModel(BaseModel):
         title="Unique user login",
         description="User login for registration",
         min_length=4,
-        max_length=24,
+        max_length=16,
     )]
     password: Annotated[str, Field(
         default=...,
