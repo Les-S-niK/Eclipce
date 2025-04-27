@@ -4,8 +4,18 @@ from typing import Annotated
 from datetime import datetime
 
 ## Third-party modules: ##
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, UUID4
 from fastapi.security import OAuth2PasswordRequestForm
+
+
+class KeyUUID(BaseModel):
+    """Model for keys UUID"""
+    key_id: Annotated[UUID4, Field(
+        default=...,
+        alias="key_id",
+        title="UUID4 key id",
+        description="Unique UUID4 for key/keys pair. "
+    )]
 
 
 class OAuth2PasswordUserForm(OAuth2PasswordRequestForm):
@@ -20,7 +30,7 @@ class OAuth2PasswordUserForm(OAuth2PasswordRequestForm):
     )]
 
 
-class TokenDecodedModel(BaseModel):
+class DecodedTokenModel(BaseModel):
     """Decoded token model."""
     login: Annotated[str, Field(
         default=...,
@@ -34,19 +44,29 @@ class TokenDecodedModel(BaseModel):
         title="Token expiration date",
         description="Token expiration date for decoded token.",
     )]
-
-
-class TokenModel(BaseModel):
-    """Token model with necessary fields for auth."""
-    access_token: Annotated[str, Field(
-        default=...,
-        alias="access_token",
-        title="Access token",
-        description="Access token for user",
-    )]
     token_type: Annotated[str, Field(
         default=...,
         alias="token_type",
         title="Token type",
         description="Oauth2 token type",
+    )]
+
+
+class TokenModel(BaseModel):
+    """Token model with necessary fields for auth."""
+    token: Annotated[str, Field(
+        default=...,
+        alias="token",
+        title="token",
+        description="Access / Refresh token for user",
+    )]
+
+
+class EncryptedTokenModel(BaseModel):
+    """Encrypted QAuth2 token model."""
+    encrypted_token: Annotated[bytes, Field(
+        default=...,
+        alias="encrypted_token",
+        title="Encrypted access token",
+        description="Encrypted access / refresh token for user.",
     )]

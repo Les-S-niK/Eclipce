@@ -1,13 +1,27 @@
 __all__ = [
-    "create_access_token", 
+    "token_auth_router"
+    "create_token", 
+    "decode_token",
     "authenticate_user",
     "BcryptActions",
-    "token_auth_router"
+    "get_token_dependency",
+    "get_encrypted_token_dependency",
+    "get_user_from_payload",
+    "hash_password",
+    "create_tokens_pair",
 ]
 
 from .oauth2 import (
-    create_access_token, 
+    create_token, 
     authenticate_user,
-    BcryptActions
+    decode_token,
+    BcryptActions,
 )
 from .views import token_auth_router
+from .utils import (
+    get_token_dependency,
+    get_encrypted_token_dependency,
+    get_user_from_payload,
+    hash_password,
+    create_tokens_pair
+)

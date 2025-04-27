@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        const authorizationUrl = "http://127.0.0.1:8000/api_v1/sign_in/";
+        const authorizationUrl = "http://127.0.0.1:8080/api_v1/sign_in/";
         const responseError = "Произошла ошибка: ";
         const authErrorText = "Не удалось авторизовать пользователя. Проверьте правильность пароля и логина.";
         const validationErrorText = "Переданы недопустимые данные. Проверьте длину логина и пароля, а также их содержимое.";

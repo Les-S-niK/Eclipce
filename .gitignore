@@ -6,6 +6,21 @@ dist/
 wheels/
 *.egg-info
 *.env
+
 # Virtual environments
 .venv
 .py
+
+# Other scripts
+*.sh
+
+## Vault: ##
+*.hcl
+vault/
+store/
+
+## Ruff cache: ##
+.ruff_cache
+
+## Git: ##
+.gitignore.save

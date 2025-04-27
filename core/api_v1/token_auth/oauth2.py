@@ -1,35 +1,40 @@
 
 ## Built-in modules: ##
-from typing import Optional, Coroutine, Any
+from typing import Optional, Awaitable, Any
 from datetime import timedelta, timezone, datetime
 
 ## Third-party modules: ##
-from aiobcrypt import hashpw, gensalt, checkpw
+from bcrypt import hashpw, gensalt, checkpw
 import jwt
+from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
 
 ## Local modules: ##
-from config import SECRET_KEY, TOKEN_HASH_ALGORITHM, TOKEN_EXPIRE_TIME
-from core.async_database import UserHook
+from config import SECRET_KEY, TOKEN_HASH_ALGORITHM, ACCESS_TOKEN_EXPIRE_TIME
+from core.async_databases.async_sql import UserHook
 from core.api_v1.sign_up.schemas import UserRegistrationModel
-from core.api_v1.token_auth.schemas import TokenDecodedModel, TokenModel
-from core.async_database.db_models import Users
+from core.api_v1.token_auth.schemas import DecodedTokenModel, TokenModel
+from core.async_databases.async_sql.db_models import Users
+from exceptions.token_exceptions import PayloadException, TokenExpiredException
 
 
-def create_access_token(
+def create_token(
     data_to_encode: dict[str, Any],
-    expires_delta: Optional[timedelta] = TOKEN_EXPIRE_TIME,
+    token_type: str,
+    expires_delta: Optional[timedelta] = ACCESS_TOKEN_EXPIRE_TIME,
 ) -> str:
     """Create access token using given information.
 
     Args:
         data_to_encode (dict[str, Any]): dictionary with user data.
-        expires_delta (Optional[timedelta], optional): Token expire time delta. Defaults to TOKEN_EXPIRE_TIME.
+        token_type (str): access / refresh token
+        expires_delta (Optional[timedelta], optional): Token expire time delta. Defaults to ACCESS_TOKEN_EXPIRE_TIME.
 
     Returns:
         str: Generated token.
     """
     to_encode: dict[str, Any] = data_to_encode.copy()
     expire_time: datetime = datetime.now(timezone.utc) + expires_delta
+    to_encode.update({"type": token_type})
     to_encode.update({"exp": expire_time})
     encoded_jwt: str = jwt.encode(
         payload=to_encode,
@@ -39,32 +44,46 @@ def create_access_token(
     return encoded_jwt
 
 
-def decode_access_token(
+def decode_token(
     encoded_token: TokenModel
-) -> TokenDecodedModel:
+) -> DecodedTokenModel:
     """Decode access JWT token.
 
     Args:
         token (str): encoded JWT token.
 
     Returns:
-        TokenDecodedModel: Decoded token information.
+        DecodedTokenModel: Decoded token information.
     """
-    payload: dict = jwt.decode(
-        jwt=encoded_token.access_token, 
-        key=SECRET_KEY,
-        algorithms=[TOKEN_HASH_ALGORITHM]
-    )
+    try: 
+        payload: dict = jwt.decode(
+            jwt=encoded_token.token, 
+            key=SECRET_KEY,
+            algorithms=[TOKEN_HASH_ALGORITHM],
+            options={
+                "verify_exp": True,
+            }
+        )
+    except InvalidTokenError:
+        raise PayloadException()
+    except ExpiredSignatureError:
+        raise TokenExpiredException()
+    
     user_login: str = payload.get("sub")
+    token_type: str = payload.get("type")
     token_expiration: datetime = payload.get("exp")
     
-    return TokenDecodedModel(
+    if not user_login:
+        raise PayloadException(detail="Missing \"sub\" field in token.")
+    
+    return DecodedTokenModel(
         login=user_login,
         expires_delta=token_expiration,
+        token_type=token_type
     )
 
 
-async def authenticate_user(user_login: str, user_password: str) -> Coroutine[Any, Any, bool | Users]:
+async def authenticate_user(user_login: str, user_password: str) -> Awaitable[UserRegistrationModel | bool]:
     """Authenticate the user, check the password and user login. 
 
     Args:
@@ -83,7 +102,7 @@ async def authenticate_user(user_login: str, user_password: str) -> Coroutine[An
         return False
     
     bcrypt_actions: BcryptActions = BcryptActions(password=user_password)
-    password_verify_result: bool = await bcrypt_actions.compare_password(hashed_password=user.hashed_password)
+    password_verify_result: bool = bcrypt_actions.compare_password(hashed_password=user.hashed_password)
     
     if not password_verify_result:
         return False
@@ -99,13 +118,13 @@ class BcryptActions(object):
         Args:
             password (str): password to work with.
         """
-        self.bytes_password: bytes = password.encode()
+        self.bytes_password: bytes = password
     
-    async def compare_password(self, hashed_password: str) -> Coroutine[Any, Any, bool]:
+    def compare_password(self, hashed_password: str) -> bool:
         """Compare hashed password with given password."""
-        return await checkpw(self.bytes_password, hashed_password.encode())
+        return checkpw(self.bytes_password, hashed_password.encode())
 
-    async def hash_password(self, rounds: Optional[int] = 12) -> Coroutine[Any, Any, bytes]:
+    def hash_password(self, rounds: Optional[int] = 12) -> bytes:
         """Hash the password and return hashed password.
 
         Args:
@@ -114,8 +133,8 @@ class BcryptActions(object):
         Returns:
             bytes: hashed password.
         """
-        salt: bytes = await gensalt(rounds=rounds)
-        return await hashpw(
+        salt: bytes = gensalt(rounds=rounds)
+        return hashpw(
             password=self.bytes_password,
             salt=salt
         )

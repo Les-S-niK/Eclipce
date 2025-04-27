@@ -1,31 +1,41 @@
 
-## Local modules: ##
-from typing import Any
+## Built-in modules: ##
+from typing import Annotated
+from asyncio import to_thread
 
 ## Third-party modules: ##
-from fastapi import APIRouter
-from fastapi.exceptions import HTTPException
-from fastapi import status
+from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 
 ## Local modules: ##
-from config import TOKEN_EXPIRE_TIME
-from core.api_v1.sign_up.schemas import UserRegistrationModel
-from core.api_v1.token_auth.schemas import TokenModel
-from core.api_v1.token_auth.oauth2 import BcryptActions
-from core.api_v1.token_auth.oauth2 import create_access_token
-from core.async_database import UserHook
-from core.async_database.db_models import Users
-
+from core.api_v1.sign_up.utils import UserRegistrationService
+from core.api_v1.sign_up.schemas import UserEncryptedRegistrationModel, UserRegistrationModel
+from core.api_v1.keys.sym_keys import get_symmetric_key_from_redis, AESDataEncrypter
+from core.api_v1.keys.sym_keys import decrypt_user_data_by_sym_key
+from core.api_v1.keys.sym_keys.schemas import SymmetricKey
+from core.api_v1.token_auth import decode_token
+from core.api_v1.token_auth import (
+    get_token_dependency,
+    get_user_from_payload,
+    hash_password,
+    create_tokens_pair
+)
+from core.api_v1.token_auth.schemas import TokenModel, DecodedTokenModel
+from core.async_databases.async_sql import UserHook
+from config import ACCESS_TOKEN
 
 
 registration_router: APIRouter = APIRouter(
     prefix="/api_v1/sign_up",
-    tags=["Registration"]
+    tags=["Sign-up"]
 )
 
 
 @registration_router.post("/")
-async def user_registration(user_registration_form: UserRegistrationModel) -> TokenModel:
+async def user_registration(
+    auth_token: Annotated[TokenModel, Depends(get_token_dependency)],
+    user_registration_form: UserEncryptedRegistrationModel,
+) -> JSONResponse:
     """User registation endpoint in Registration router.
 
     Args:
@@ -34,38 +44,46 @@ async def user_registration(user_registration_form: UserRegistrationModel) -> To
     Returns:
         JSONResponse: Json response to user. 
     """
-    user_login: str = user_registration_form.login
-    user_password: str = user_registration_form.password
-    bcrypt_actions: BcryptActions = BcryptActions(password=user_password)
-    hashed_user_password: bytes = await bcrypt_actions.hash_password()
+    if auth_token:
+        decoded_token: DecodedTokenModel = decode_token(encoded_token=auth_token)
+        
+        user: UserRegistrationModel = await get_user_from_payload(decoded_token=decoded_token)
+        if user and decoded_token.token_type == ACCESS_TOKEN:
+            return auth_token
     
-    async_sql_hook: UserHook = UserHook()
+    symmetric_key: SymmetricKey = await get_symmetric_key_from_redis(key_id=str(user_registration_form.key_id))
     
-    database_response: bool | Users = await async_sql_hook.append(
-        login=user_login,
+    user_login: bytes
+    user_password: bytes
+    user_login, user_password = decrypt_user_data_by_sym_key(
+        user_data=user_registration_form,
+        symmetric_key=symmetric_key
+    )
+    
+    hashed_user_password: bytes = await to_thread(
+        hash_password,
+        user_password
+    )
+    
+    async_db_hook: UserHook = UserHook()
+    await UserRegistrationService(user_hook=async_db_hook).register_user(
+        login=str(user_login),
         hashed_password=hashed_user_password
     )
-    if isinstance(database_response, Users):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="User with this login already exists.",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-    if not database_response:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to register the user.",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
     
-    user_data: dict[str, Any] = {
-        "sub": user_login,
+    json_user_data: dict[str, str] = {
+        "sub": user_login.decode()
     }
-    jwt_access_token: str = create_access_token(
-        data_to_encode=user_data,
-        expires_delta=TOKEN_EXPIRE_TIME,
-    )
-    return TokenModel(
-        access_token=jwt_access_token,
-        token_type="Bearer"
-    )
+
+    tokens_pair: list[str] = list(create_tokens_pair(data_to_endode=json_user_data))
+    encrypted_token: bytes = AESDataEncrypter(
+        data_to_encrypt=tokens_pair[1],
+        symmetric_key=symmetric_key,
+        encode_data_to_base64=True
+    ).encrypted_data
+    tokens_pair[1] = encrypted_token
+    
+    return {
+        "access_token": tokens_pair[0],
+        "refresh_token": tokens_pair[1],
+    }
