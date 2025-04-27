@@ -9,8 +9,8 @@ from redis.asyncio import from_url, Redis
 
 @dataclass
 class Settings:
-    DB_HOST: str = getenv("DB_REDDIS_HOST")
-    DB_PORT: int = getenv("DB_REDDIS_PORT")
+    DB_HOST: str = getenv("DB_REDIS_HOST")
+    DB_PORT: int = getenv("DB_REDIS_PORT")
     DB_USER: str = getenv("DB_USER")
     DB_PASS: str = getenv("DB_PASS")
     DB_NAME: str = getenv("DB_NAME")
