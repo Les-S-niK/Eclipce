@@ -34,6 +34,15 @@ export async function exportAESKey(key) {
     return await window.crypto.subtle.exportKey("raw", key);
 }
 
+export async function importAESKey(rawKey) {
+    return await window.crypto.subtle.importKey(
+        "raw",
+        rawKey,
+        { name: "AES-CBC" },
+        false,
+        ["encrypt", "decrypt"]
+    );
+}
 export async function encryptWithAES(key, iv, data) {
     const encoder = new TextEncoder();
     const dataBytes = encoder.encode(data);

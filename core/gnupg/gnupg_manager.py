@@ -1,7 +1,7 @@
 
 ## Built-in modules: ##
-from os import remove, PathLike
-from os.path import join
+from os import remove, PathLike, mkdir
+from os.path import join, exists
 from typing import Awaitable
 import aiofiles
 
@@ -28,6 +28,8 @@ class GnupgFolderManager:
         self,
         symmetric_key_id: UUID,
     ) -> None:
+        if not exists(KEYS_STORE_PATH):
+            mkdir(KEYS_STORE_PATH)
         self.file_path: PathLike = join(KEYS_STORE_PATH, f"{symmetric_key_id}{FILE_EXST}")
     
     async def get_key_from_file(self) -> Awaitable[bytes | None]:
