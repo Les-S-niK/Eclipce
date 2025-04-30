@@ -13,10 +13,11 @@ from core.api_v1.token_auth.utils import (
 )
 from core.api_v1.token_auth.oauth2 import decode_token, create_token
 from core.api_v1.token_auth.schemas import TokenModel, DecodedTokenModel, EncryptedTokenModel
-from core.api_v1.keys.sym_keys import get_symmetric_key_from_redis, AESDataDecrypter
+from core.api_v1.keys.sym_keys import AESDataDecrypter
 from core.api_v1.keys.sym_keys.schemas import SymmetricKey
 from core.api_v1.token_auth.schemas import KeyUUID
 from core.gnupg import GnupgFolderManager, gnupg_decrypt_key
+from core.async_databases.async_redis import get_symmetric_key_from_redis
 from exceptions.token_exceptions import RefreshTokenValidationException
 from config import ACCESS_TOKEN, ACCESS_TOKEN_EXPIRE_TIME
 

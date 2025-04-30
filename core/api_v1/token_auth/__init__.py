@@ -9,13 +9,14 @@ __all__ = [
     "get_user_from_payload",
     "hash_password",
     "create_tokens_pair",
+    "AuthenticationService",
 ]
 
 from .oauth2 import (
     create_token, 
-    authenticate_user,
     decode_token,
     BcryptActions,
+    AuthenticationService,
 )
 from .views import token_auth_router
 from .utils import (

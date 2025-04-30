@@ -15,6 +15,67 @@ from core.api_v1.sign_up.schemas import UserRegistrationModel
 from core.api_v1.token_auth.schemas import DecodedTokenModel, TokenModel
 from core.async_databases.async_sql.db_models import Users
 from exceptions.token_exceptions import PayloadException, TokenExpiredException
+from exceptions.user_exceptions import UserAuthException
+
+
+class AuthenticationService:
+    """Service to authenticate user data."""
+    def __init__(
+        self,
+        user_login: str,
+        user_password: str,
+    ) -> None:
+        """Verify user data, compare inputed password with password in the database.
+        UserRegistrationModel creating.
+
+        Args:
+            user_login (str): decrypted user login
+            user_password (str): decrypted user password
+
+        Raises:
+            PayloadException: If password verification result if false.
+        """
+        self.user_login: str = user_login
+        self.user_password: str = user_password
+    
+    async def create_registration_model(self) -> Awaitable[UserRegistrationModel]:
+        await self._verify_user_password()
+        self.user_registration_model: UserRegistrationModel = UserRegistrationModel(
+            login=self.user_login,
+            password=self.user_password
+        )
+
+    async def _get_user_from_db(self) -> Awaitable[Users]:
+        """Get user model from the database.
+
+        Returns:
+            Users | False: User model if user in the database.
+        Raises:
+            UserAuthException if user is not.
+        """
+        async_database_hook: UserHook = UserHook()
+        user: Users = await async_database_hook.get(
+            one_object=True,
+            login=self.user_login,
+        )
+        if not user:
+            raise UserAuthException()
+        
+        return user
+
+    async def _verify_user_password(self) -> Awaitable[bool]:
+        """Verify and compare inputed by user password with password in the database.
+
+        Returns:
+            bool: True if password is valid, else: False.
+        """
+        user: Users = await self._get_user_from_db()
+        bcrypt_actions: BcryptActions = BcryptActions(password=self.user_password)
+        password_verify_result: bool = bcrypt_actions.compare_password(hashed_password=user.hashed_password)
+        if not password_verify_result:
+            raise PayloadException()
+        
+        return password_verify_result
 
 
 def create_token(
@@ -81,33 +142,6 @@ def decode_token(
         expires_delta=token_expiration,
         token_type=token_type
     )
-
-
-async def authenticate_user(user_login: str, user_password: str) -> Awaitable[UserRegistrationModel | bool]:
-    """Authenticate the user, check the password and user login. 
-
-    Args:
-        user_login (str)
-        user_password (str)
-
-    Returns:
-        bool | User: False if user not in database. User model if user input is correctly.
-    """
-    async_database_hook: UserHook = UserHook()
-    user: Users = await async_database_hook.get(
-        one_object=True,
-        login=user_login,
-    )
-    if not user:
-        return False
-    
-    bcrypt_actions: BcryptActions = BcryptActions(password=user_password)
-    password_verify_result: bool = bcrypt_actions.compare_password(hashed_password=user.hashed_password)
-    
-    if not password_verify_result:
-        return False
-    
-    return UserRegistrationModel(login=user_login, password=user_password)
 
 
 class BcryptActions(object):

@@ -17,27 +17,6 @@ from core.api_v1.keys.asym_keys.schemas import AsymmetricKeysPair
 from core.async_databases.async_redis import asym_keys_redis
 
 
-async def get_asym_keys_from_redis(asym_keys_uuid: UUID) -> Awaitable[AsymmetricKeysPair]:
-    """Get asym keys pair from the redis.
-
-    Args:
-        asym_keys_uuid (UUID): Asym keys UUID in the redis.
-
-    Returns:
-        Awaitable[AsymmetricKeysPair]. - Asymmetric keys pair object with id, public and private key.
-    """
-    async with asym_keys_redis.client() as connection:
-        asym_keys: dict[str, bytes] = await connection.hgetall(str(asym_keys_uuid))
-    private_key: RsaKey = asym_keys.get(b"private_key")
-    public_key: bytes = asym_keys.get(b"public_key")
-    
-    return AsymmetricKeysPair(
-        keys_id=asym_keys_uuid,
-        public_key=public_key,
-        private_key=private_key,
-    )
-
-
 async def create_asymmetric_keys_dependency(key_lenght: Optional[int] = 2048) -> Awaitable[AsymmetricKeysPair]:
     """Create two asymmetric keys for data encryption.
 

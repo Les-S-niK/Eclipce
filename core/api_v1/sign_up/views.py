@@ -1,6 +1,7 @@
 
 ## Built-in modules: ##
 from typing import Annotated
+from typing import Optional
 from asyncio import to_thread
 
 ## Third-party modules: ##
@@ -10,7 +11,7 @@ from fastapi.responses import JSONResponse
 ## Local modules: ##
 from core.api_v1.sign_up.utils import UserRegistrationService
 from core.api_v1.sign_up.schemas import UserEncryptedRegistrationModel, UserRegistrationModel
-from core.api_v1.keys.sym_keys import get_symmetric_key_from_redis, AESDataEncrypter
+from core.api_v1.keys.sym_keys import AESDataEncrypter
 from core.api_v1.keys.sym_keys import decrypt_user_data_by_sym_key
 from core.api_v1.keys.sym_keys.schemas import SymmetricKey
 from core.api_v1.token_auth import decode_token
@@ -22,6 +23,7 @@ from core.api_v1.token_auth import (
 )
 from core.api_v1.token_auth.schemas import TokenModel, DecodedTokenModel
 from core.async_databases.async_sql import UserHook
+from core.async_databases.async_redis import get_symmetric_key_from_redis
 from config import ACCESS_TOKEN
 
 
@@ -34,7 +36,7 @@ registration_router: APIRouter = APIRouter(
 @registration_router.post("/")
 async def user_registration(
     auth_token: Annotated[TokenModel, Depends(get_token_dependency)],
-    user_registration_form: UserEncryptedRegistrationModel,
+    user_registration_form: Optional[UserEncryptedRegistrationModel],
 ) -> JSONResponse:
     """User registation endpoint in Registration router.
 

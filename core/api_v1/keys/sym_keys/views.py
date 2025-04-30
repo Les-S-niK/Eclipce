@@ -10,8 +10,9 @@ from uuid import UUID
 ## Local modules: ##
 from core.api_v1.keys.sym_keys.schemas import SymmetricKey, EncryptedSymmetricKey
 from core.api_v1.keys.sym_keys.utils import save_symmetric_key_to_redis
-from core.api_v1.keys.asym_keys import decrypt_data_by_private_key, get_asym_keys_from_redis
+from core.api_v1.keys.asym_keys import decrypt_data_by_private_key
 from core.api_v1.keys.asym_keys.schemas import AsymmetricKeysPair
+from core.async_databases.async_redis import get_asym_keys_from_redis
 from core.gnupg import gnupg_encrypt_key, GnupgFolderManager
 
 

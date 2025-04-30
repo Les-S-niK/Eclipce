@@ -232,25 +232,3 @@ def decrypt_user_data_by_sym_key(
     ).decrypted_data
     
     return (user_login, user_password)
-
-
-async def get_symmetric_key_from_redis(key_id: str) -> Awaitable[SymmetricKey]:
-    """Get the Symmetric key from Redis database.
-
-    Args:
-        key_id (str): symmetric key id.
-
-    Returns:
-        SymmetricKey: Key object with the key_id, sym_key and key_iv.
-    """
-    async with sym_key_redis.client() as connection:
-        sym_key_hash = await connection.hgetall(key_id)
-    
-    sym_key = sym_key_hash.get(b'sym_key')
-    key_iv = sym_key_hash.get(b'key_iv')
-    
-    return SymmetricKey(
-        key_id=key_id,
-        sym_key=sym_key,
-        key_iv=key_iv,
-    )

@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem("refresh_token", refreshEncryptedToken)
         localStorage.setItem("symmetric_key_id", keyId)
         
-        // window.location.href = "iLoveDicks.cum"
+        window.location.href = "iLoveDicks.cum"
     }
 
 
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log(accessToken)
             if (accessToken){
                 sessionStorage.setItem("access_token", accessToken)
-                // window.location.href = "iLoveDicks.cum"
+                window.location.href = "iLoveDicks.cum"
             }
         }
     }
