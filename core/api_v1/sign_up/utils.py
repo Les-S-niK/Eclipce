@@ -1,6 +1,6 @@
 
 ## Built-in modules: ##
-from typing import Awaitable
+from typing import Coroutine
 
 ## Local modules: ##
 from core.api_v1.sign_up.schemas import UserEncryptedRegistrationModel
@@ -19,7 +19,7 @@ class UserRegistrationService:
         self,
         login: str,
         hashed_password: bytes
-    ) -> Awaitable[None]:
+    ) -> Coroutine[None, None, None]:
         """Add the user to database and check the errors.
 
         Args:

@@ -49,21 +49,22 @@ async def user_authorization(
     
     user_login: bytes
     user_password: bytes
-    user_login, user_password = decrypt_user_data_by_sym_key(
-        user_data=user_registration_form,
-        symmetric_key=symmetric_key
+    user_login, user_password = await to_thread(
+        decrypt_user_data_by_sym_key,
+        user_registration_form,
+        symmetric_key
     )
     user: UserRegistrationModel = await AuthenticationService(
         user_login=user_login,
         user_password=user_password
     ).create_registration_model()
     
-    json_user_data: dict[str, str] = {
+    json_user_data: dict[str, bytes] = {
         "sub": user_login,
     }
-    access_token: str = await create_token(
+    access_token: str = create_token(
         data_to_encode=json_user_data,
         token_type=ACCESS_TOKEN,
     )
     
-    return TokenModel(access_token)
+    return TokenModel(token=access_token)

@@ -1,6 +1,6 @@
 
 ## Built-in modules: ##
-from typing import Optional, Awaitable, Any
+from typing import Optional, Coroutine, Any
 from base64 import b64decode, b64encode
 
 ## Third-party modules: ##
@@ -19,7 +19,7 @@ from core.async_databases.async_redis import sym_key_redis
 async def save_symmetric_key_to_redis(
     symmetric_key_id: UUID,
     key_data_bytes: dict[str, bytes]
-) -> Awaitable[None]:
+) -> Coroutine[None, None, None]:
     """Save the symmetric CBC key bytes in redis database. 
 
     Args:

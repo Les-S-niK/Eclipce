@@ -1,6 +1,6 @@
 
 ## Built-in modules: ##
-from typing import Awaitable
+from typing import Coroutine
 
 ## Third-party modules: ##
 from uuid import UUID
@@ -12,14 +12,14 @@ from core.api_v1.keys.sym_keys.schemas import SymmetricKey
 from core.async_databases.async_redis.db_engine import sym_key_redis, asym_keys_redis
 
 
-async def get_asym_keys_from_redis(asym_keys_uuid: UUID) -> Awaitable[AsymmetricKeysPair]:
+async def get_asym_keys_from_redis(asym_keys_uuid: UUID) -> Coroutine[None, None, AsymmetricKeysPair]:
     """Get asym keys pair from the redis.
 
     Args:
         asym_keys_uuid (UUID): Asym keys UUID in the redis.
 
     Returns:
-        Awaitable[AsymmetricKeysPair]. - Asymmetric keys pair object with id, public and private key.
+        Coroutine[None, None, AsymmetricKeysPair]. - Asymmetric keys pair object with id, public and private key.
     """
     async with asym_keys_redis.client() as connection:
         asym_keys: dict[str, bytes] = await connection.hgetall(str(asym_keys_uuid))
@@ -33,7 +33,7 @@ async def get_asym_keys_from_redis(asym_keys_uuid: UUID) -> Awaitable[Asymmetric
     )
 
 
-async def get_symmetric_key_from_redis(key_id: str) -> Awaitable[SymmetricKey]:
+async def get_symmetric_key_from_redis(key_id: str) -> Coroutine[None, None, SymmetricKey]:
     """Get the Symmetric key from Redis database.
 
     Args:

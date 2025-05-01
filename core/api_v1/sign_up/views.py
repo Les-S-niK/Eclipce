@@ -57,9 +57,10 @@ async def user_registration(
     
     user_login: bytes
     user_password: bytes
-    user_login, user_password = decrypt_user_data_by_sym_key(
-        user_data=user_registration_form,
-        symmetric_key=symmetric_key
+    user_login, user_password = await to_thread(
+        decrypt_user_data_by_sym_key,
+        user_registration_form,
+        symmetric_key,
     )
     
     hashed_user_password: bytes = await to_thread(

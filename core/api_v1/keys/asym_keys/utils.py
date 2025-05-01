@@ -1,6 +1,6 @@
 
 ## Built-in modules: ##
-from typing import Optional, Awaitable
+from typing import Optional, Coroutine
 from base64 import b64decode
 from asyncio import to_thread
 
@@ -17,7 +17,7 @@ from core.api_v1.keys.asym_keys.schemas import AsymmetricKeysPair
 from core.async_databases.async_redis import asym_keys_redis
 
 
-async def create_asymmetric_keys_dependency(key_lenght: Optional[int] = 2048) -> Awaitable[AsymmetricKeysPair]:
+async def create_asymmetric_keys_dependency(key_lenght: Optional[int] = 2048) -> Coroutine[None, None, AsymmetricKeysPair]:
     """Create two asymmetric keys for data encryption.
 
     Args:

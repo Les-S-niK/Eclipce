@@ -1,6 +1,6 @@
 
 ## Built-in modules: ##
-from typing import Optional, Awaitable, Any
+from typing import Optional, Coroutine, Any
 from datetime import timedelta, timezone, datetime
 
 ## Third-party modules: ##
@@ -38,14 +38,14 @@ class AuthenticationService:
         self.user_login: str = user_login
         self.user_password: str = user_password
     
-    async def create_registration_model(self) -> Awaitable[UserRegistrationModel]:
+    async def create_registration_model(self) -> Coroutine[None, None, UserRegistrationModel]:
         await self._verify_user_password()
         self.user_registration_model: UserRegistrationModel = UserRegistrationModel(
             login=self.user_login,
             password=self.user_password
         )
 
-    async def _get_user_from_db(self) -> Awaitable[Users]:
+    async def _get_user_from_db(self) -> Coroutine[None, None, Users]:
         """Get user model from the database.
 
         Returns:
@@ -63,7 +63,7 @@ class AuthenticationService:
         
         return user
 
-    async def _verify_user_password(self) -> Awaitable[bool]:
+    async def _verify_user_password(self) -> Coroutine[None, None, bool]:
         """Verify and compare inputed by user password with password in the database.
 
         Returns:

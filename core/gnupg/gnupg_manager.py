@@ -2,7 +2,7 @@
 ## Built-in modules: ##
 from os import remove, PathLike, mkdir
 from os.path import join, exists
-from typing import Awaitable
+from typing import Coroutine
 import aiofiles
 
 ## Third-party modules: ##
@@ -32,7 +32,7 @@ class GnupgFolderManager:
             mkdir(KEYS_STORE_PATH)
         self.file_path: PathLike = join(KEYS_STORE_PATH, f"{symmetric_key_id}{FILE_EXST}")
     
-    async def get_key_from_file(self) -> Awaitable[bytes | None]:
+    async def get_key_from_file(self) -> Coroutine[None, None, bytes | None]:
         """Read the file and return readed key.
 
         Returns:
@@ -52,7 +52,7 @@ class GnupgFolderManager:
     async def write_key_in_file(
         self,
         encrypted_symmetric_key: bytes
-    ) -> Awaitable[None]:
+    ) -> Coroutine[None, None, None]:
         """Write the GNUPG encrypted key in file.
 
         Args:

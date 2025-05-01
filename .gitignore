@@ -24,3 +24,6 @@ store/
 
 ## Git: ##
 .gitignore.save
+
+## vscode: ##
+.vscode/
